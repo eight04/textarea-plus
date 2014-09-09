@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name        Textarea Plus
-// @description	An userscript to improve plain textarea for code editing
+// @description	An userscript to improve plain textarea for code editing.
 // @namespace   eight04.blogspot.com
 // @include     http*
-// @version     0.1
+// @version     1.0
 // @grant       GM_addStyle
 // ==/UserScript==
 
@@ -71,7 +71,11 @@ var textareaPlus = function(){
 	}
 	
 	function inMultiLine(data) {
-		return data.text.indexOf("\n", data.pos[0]) < data.pos[1];
+		var s = data.text.indexOf("\n", data.pos[0]);
+		if (s < 0) {
+			return false;
+		}
+		return  s < data.pos[1];
 	}
 	
 	function indent(data){
@@ -145,7 +149,7 @@ var textareaPlus = function(){
 	function getTextStart(data) {
 		var lineStart = getLineStart(data);
 		var pos = searchFrom(data.text, /[\S\n]/, lineStart);
-		if (data.text[pos] == "\n") {
+		if (pos < 0 || data.text[pos] == "\n") {
 			return getLineEnd(data);
 		}
 		return pos;
@@ -188,6 +192,7 @@ var textareaPlus = function(){
 	}
 	
 	function enter(data) {
+		// console.log(data);
 		var indents = getIndents(data);
 		insert(data, "\n" + indents);
 	}
@@ -214,14 +219,14 @@ window.addEventListener("keydown", function(e){
 	
 	var command;
 	
-	if (e.keyCode == 9) {
+	if (e.keyCode == 9 && !e.ctrlKey && !e.altKey) {
 		// tab
 		if (e.shiftKey) {
 			command = "unindent";
 		} else {
 			command = "indent";
 		}
-	} else if (e.keyCode == 13) {
+	} else if (e.keyCode == 13 && !e.ctrlKey && !e.altKey && !e.shiftKey) {
 		// enter
 		command = "enter";
 	} else if (e.keyCode == 36 && !e.ctrlKey && !e.altKey) {
