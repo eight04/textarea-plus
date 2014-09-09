@@ -3,7 +3,7 @@
 // @description	An userscript to improve plain textarea for code editing.
 // @namespace   eight04.blogspot.com
 // @include     http*
-// @version     1.0
+// @version     1.0.1
 // @grant       GM_addStyle
 // ==/UserScript==
 
@@ -212,8 +212,33 @@ var textareaPlus = function(){
 	return init;
 }();
 
+function validArea(area) {
+	if (area.nodeName != "TEXTAREA") {
+		return false;
+	} 
+	
+	if (area.dataset.textareaPlus === "false") {
+		return false;
+	}
+	
+	if (area.dataset.textareaPlus === "true") {
+		return true;
+	}
+	
+	var node = area;
+	while ((node = node.parentNode)) {
+		if (node.classList.contains("CodeMirror")) {
+			area.dataset.textareaPlus = "false";
+			return false;
+		}
+	}
+	
+	area.dataset.textareaPlus = "true";
+	return true;
+}
+
 window.addEventListener("keydown", function(e){
-	if (e.target.nodeName != "TEXTAREA") {
+	if (!validArea(e.target)) {
 		return;
 	}
 	
@@ -237,6 +262,10 @@ window.addEventListener("keydown", function(e){
 			command = "selectHome";
 		}
 	} else {
+		return;
+	}
+	
+	if (!validParent(e.target)) {
 		return;
 	}
 	
