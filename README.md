@@ -1,6 +1,6 @@
-textarea-plus
+Textarea Plus
 =============
-An userscript to improve plain textarea for code editing.
+Have a better textarea! An userscript to improve plain textarea for code editing.
 
 Features
 --------
