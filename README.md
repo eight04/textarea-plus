@@ -11,5 +11,4 @@ Features
 
 Demo
 ----
-
-
+<https://rawgit.com/eight04/textarea-plus/master/demo.html>
