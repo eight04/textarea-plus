@@ -12,3 +12,9 @@ Features
 Demo
 ----
 <https://rawgit.com/eight04/textarea-plus/master/demo.html>
+
+Changelog
+---------
+* 1.0.4 - ignore if element has onkeydown attr.
+* 1.0.3 - add ignore class list.
+* 1.0 - first release.

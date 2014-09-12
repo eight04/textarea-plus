@@ -3,11 +3,13 @@
 // @description	An userscript to improve plain textarea for code editing.
 // @namespace   eight04.blogspot.com
 // @include     http*
-// @version     1.0.2
+// @version     1.0.4
 // @grant       GM_addStyle
 // ==/UserScript==
 
 "use strict";
+
+var ignoreClassList = ["CodeMirror", "ace_editor"];
 
 var textareaPlus = function(){
 
@@ -225,11 +227,18 @@ function validArea(area) {
 		return true;
 	}
 	
-	var node = area;
+	if (area.onkeydown) {
+		area.dataset.textareaPlus = "false";
+		return false;
+	}
+	
+	var node = area, i;
 	while ((node = node.parentNode) != document.body) {
-		if (node.classList.contains("CodeMirror")) {
-			area.dataset.textareaPlus = "false";
-			return false;
+		for (i = 0; i < ignoreClassList.length; i++) {
+			if (node.classList.contains(ignoreClassList[i])) {
+				area.dataset.textareaPlus = "false";
+				return false;
+			}
 		}
 	}
 	
