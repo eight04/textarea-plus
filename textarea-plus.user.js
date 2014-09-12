@@ -3,7 +3,7 @@
 // @description	An userscript to improve plain textarea for code editing.
 // @namespace   eight04.blogspot.com
 // @include     http*
-// @version     1.0.4
+// @version     1.0.5
 // @grant       GM_addStyle
 // ==/UserScript==
 
@@ -227,10 +227,10 @@ function validArea(area) {
 		return true;
 	}
 	
-	if (area.onkeydown) {
-		area.dataset.textareaPlus = "false";
-		return false;
-	}
+	// if (area.onkeydown) {
+		// area.dataset.textareaPlus = "false";
+		// return false;
+	// }
 	
 	var node = area, i;
 	while ((node = node.parentNode) != document.body) {
@@ -275,7 +275,8 @@ window.addEventListener("keydown", function(e){
 	}
 	
 	e.preventDefault();
+	e.stopPropagation();
 	textareaPlus(e.target, command);
-});
+}, true);
 
 GM_addStyle("textarea {tab-size: 4; -moz-tab-size: 4; -o-tab-size: 4;}");
