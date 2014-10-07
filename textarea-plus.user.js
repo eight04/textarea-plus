@@ -3,7 +3,7 @@
 // @description	An userscript to improve plain textarea for code editing.
 // @namespace   eight04.blogspot.com
 // @include     http*
-// @version     1.0.5
+// @version     1.1
 // @grant       GM_addStyle
 // ==/UserScript==
 
@@ -25,9 +25,17 @@ var textareaPlus = function(){
 		return data.pos[1] - data.pos[0];
 	}
 	
+	function takeRange(data) {
+		if (data.pos[0] > data.pos[1]) {
+			return [data.pos[1], data.pos[0]];
+		}
+		return data.pos;
+	}
+	
 	function insert(data, text){
-		data.text = data.text.substr(0, data.pos[0]) + text + data.text.substr(data.pos[1]);
-		data.pos[0] += text.length;
+		var pos = takeRange(data);
+		data.text = data.text.substr(0, pos[0]) + text + data.text.substr(pos[1]);
+		data.pos[0] = pos[0] + text.length;
 		data.pos[1] = data.pos[0];
 	}
 	
@@ -38,11 +46,15 @@ var textareaPlus = function(){
 		insert(data, "");
 	}
 	
-	function getLineStart(data){
-		var pos = data.pos[0];
+	function getLineStart(data, pos){
+		if (pos == undefined) {
+			pos = data.pos[1];
+		}
+		
 		if (data.text[pos] == "\n") {
 			pos--;
 		}
+		
 		var s = data.text.lastIndexOf("\n", pos);
 		if (s < 0) {
 			return 0;
@@ -50,8 +62,11 @@ var textareaPlus = function(){
 		return s + 1;
 	}
 	
-	function getLineEnd(data){
-		var s = data.text.indexOf("\n", data.pos[1]);
+	function getLineEnd(data, pos){
+		if (pos == undefined) {
+			pos = data.pos[1];
+		}
+		var s = data.text.indexOf("\n", pos);
 		if (s < 0) {
 			return data.text.length;
 		}
@@ -59,7 +74,8 @@ var textareaPlus = function(){
 	}
 	
 	function multiIndent(data){
-		var lineStart = getLineStart(data), lineEnd = getLineEnd(data);
+		var pos = takeRange(data);
+		var lineStart = getLineStart(data, pos[0]), lineEnd = getLineEnd(data, pos[1]);
 		var lines = data.text.substr(lineStart, lineEnd - lineStart);
 		
 		lines = lines.split("\n");
@@ -68,16 +84,22 @@ var textareaPlus = function(){
 		}
 		lines = lines.join("\n");
 		data.text = data.text.substr(0, lineStart) + lines + data.text.substr(lineEnd);
-		data.pos[0] = lineStart;
-		data.pos[1] = lineEnd + i;
+		if (data.pos[0] > data.pos[1]) {
+			data.pos[1] = lineStart;
+			data.pos[0] = lineEnd + i;
+		} else {
+			data.pos[0] = lineStart;
+			data.pos[1] = lineEnd + i;
+		}
 	}
 	
 	function inMultiLine(data) {
-		var s = data.text.indexOf("\n", data.pos[0]);
+		var pos = takeRange(data);
+		var s = data.text.indexOf("\n", pos[0]);
 		if (s < 0) {
 			return false;
 		}
-		return  s < data.pos[1];
+		return  s < pos[1];
 	}
 	
 	function indent(data){
@@ -96,21 +118,27 @@ var textareaPlus = function(){
 	}
 	
 	function multiUnindent(data){
-		var lineStart = getLineStart(data), lineEnd = getLineEnd(data);
+		var pos = takeRange(data);
+		var lineStart = getLineStart(data, pos[0]), lineEnd = getLineEnd(data, pos[1]);
 		var lines = data.text.substr(lineStart, lineEnd - lineStart);
 		
 		lines = lines.split("\n");
 		var len = 0;
 		for (var i = 0; i < lines.length; i++) {
-			var m = lines[i].match(/^(    | {0,3}\t?)(.*)$/);
+			var m = lines[i].match(/^( {4}| {0,3}\t?)(.*)$/);
 			// console.log(m);
 			len += m[1].length;
 			lines[i] = m[2];
 		}
 		lines = lines.join("\n");
 		data.text = data.text.substr(0, lineStart) + lines + data.text.substr(lineEnd);
-		data.pos[0] = lineStart;
-		data.pos[1] = lineEnd - len;
+		if (data.pos[0] > data.pos[1]) {
+			data.pos[1] = lineStart;
+			data.pos[0] = lineEnd - len;
+		} else {
+			data.pos[0] = lineStart;
+			data.pos[1] = lineEnd - len;
+		}
 	}
 	
 	function backspace(data) {
@@ -123,14 +151,10 @@ var textareaPlus = function(){
 		}
 	}
 	
-	function inText(data) {
-		return getTextStart(data) <= data.pos[0];
-	}
-	
 	function unindent(data) {
 		if (inMultiLine(data)) {
 			multiUnindent(data);
-		} else if (data.text[data.pos[0] - 1] == "\t") {
+		} else if (!selectionRange(data) && data.text[data.pos[0] - 1] == "\t") {
 			backspace(data);
 		} else {
 			multiUnindent(data);
@@ -148,9 +172,9 @@ var textareaPlus = function(){
 		return s + pos;
 	}
 	
-	function getTextStart(data) {
-		var lineStart = getLineStart(data);
-		var pos = searchFrom(data.text, /[\S\n]/, lineStart);
+	function getTextStart(data, pos) {
+		var lineStart = getLineStart(data, pos);
+		pos = searchFrom(data.text, /[\S\n]/, lineStart);
 		if (pos < 0 || data.text[pos] == "\n") {
 			return getLineEnd(data);
 		}
@@ -158,7 +182,7 @@ var textareaPlus = function(){
 	}
 	
 	function isTextStart(data) {
-		return getTextStart(data) == data.pos[0];
+		return getTextStart(data) == data.pos[1];
 	}
 	
 	function home(data) {
@@ -171,22 +195,20 @@ var textareaPlus = function(){
 	}
 	
 	function selectHome(data) {
-		var pos = data.pos[1];
+		var pos = data.pos[0];
 		home(data);
-		if (data.pos[0] > pos) {
-			home(data);
-		}
-		data.pos[1] = pos;
+		data.pos[0] = pos;
 	}
 	
 	function getIndents(data) {
-		var lineStart = getLineStart(data);
+		var pos = takeRange(data);
+		var lineStart = getLineStart(data, pos[0]);
 		var len;
 		
-		var textStart = getTextStart(data);
+		var textStart = getTextStart(data, pos[0]);
 		// console.log(textStart);
-		if (textStart >= data.pos[0]) {
-			len = data.pos[0] - lineStart;
+		if (textStart >= pos[0]) {
+			len = pos[0] - lineStart;
 		} else {
 			len = textStart - lineStart;
 		}
@@ -203,12 +225,22 @@ var textareaPlus = function(){
 		var data = {
 			text: node.value,
 			pos: [node.selectionStart, node.selectionEnd]
-		};
+		}, t;
+		
+		if (node.selectionDirection == "backward") {
+			t = data.pos[0];
+			data.pos[0] = data.pos[1];
+			data.pos[1] = t;
+		}
 		
 		editor[command](data);
 		
 		node.value = data.text;
-		node.setSelectionRange(data.pos[0], data.pos[1]);
+		if (data.pos[0] > data.pos[1]) {
+			node.setSelectionRange(data.pos[1], data.pos[0], "backward");
+		} else {
+			node.setSelectionRange(data.pos[0], data.pos[1], "forward");
+		}
 	}
 	
 	return init;
@@ -276,6 +308,7 @@ window.addEventListener("keydown", function(e){
 	
 	e.preventDefault();
 	e.stopPropagation();
+
 	textareaPlus(e.target, command);
 }, true);
 
