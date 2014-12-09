@@ -18,50 +18,52 @@ var textareaPlus = function(){
 		unindent: unindent,
 		home: home,
 		selectHome: selectHome,
-		enter: enter
+		enter: enter,
+		brace0: brace0,
+		brace1: brace1
 	};
-	
+
 	function selectionRange(data){
 		return data.pos[1] - data.pos[0];
 	}
-	
+
 	function takeRange(data) {
 		if (data.pos[0] > data.pos[1]) {
 			return [data.pos[1], data.pos[0]];
 		}
 		return data.pos;
 	}
-	
+
 	function insert(data, text){
 		var pos = takeRange(data);
 		data.text = data.text.substr(0, pos[0]) + text + data.text.substr(pos[1]);
 		data.pos[0] = pos[0] + text.length;
 		data.pos[1] = data.pos[0];
 	}
-	
+
 	function del(data){
 		if (!selectionRange(data)) {
 			data.pos[1]++;
 		}
 		insert(data, "");
 	}
-	
+
 	function getLineStart(data, pos){
 		if (pos == undefined) {
 			pos = data.pos[1];
 		}
-		
+
 		if (data.text[pos] == "\n") {
 			pos--;
 		}
-		
+
 		var s = data.text.lastIndexOf("\n", pos);
 		if (s < 0) {
 			return 0;
 		}
 		return s + 1;
 	}
-	
+
 	function getLineEnd(data, pos){
 		if (pos == undefined) {
 			pos = data.pos[1];
@@ -72,12 +74,12 @@ var textareaPlus = function(){
 		}
 		return s;
 	}
-	
+
 	function multiIndent(data){
 		var pos = takeRange(data);
 		var lineStart = getLineStart(data, pos[0]), lineEnd = getLineEnd(data, pos[1]);
 		var lines = data.text.substr(lineStart, lineEnd - lineStart);
-		
+
 		lines = lines.split("\n");
 		for (var i = 0; i < lines.length; i++) {
 			lines[i] = "\t" + lines[i];
@@ -92,7 +94,7 @@ var textareaPlus = function(){
 			data.pos[1] = lineEnd + i;
 		}
 	}
-	
+
 	function inMultiLine(data) {
 		var pos = takeRange(data);
 		var s = data.text.indexOf("\n", pos[0]);
@@ -101,7 +103,7 @@ var textareaPlus = function(){
 		}
 		return  s < pos[1];
 	}
-	
+
 	function indent(data){
 		if (!selectionRange(data)) {
 			insert(data, "\t");
@@ -116,12 +118,12 @@ var textareaPlus = function(){
 			}
 		}
 	}
-	
+
 	function multiUnindent(data){
 		var pos = takeRange(data);
 		var lineStart = getLineStart(data, pos[0]), lineEnd = getLineEnd(data, pos[1]);
 		var lines = data.text.substr(lineStart, lineEnd - lineStart);
-		
+
 		lines = lines.split("\n");
 		var len = 0;
 		for (var i = 0; i < lines.length; i++) {
@@ -140,9 +142,9 @@ var textareaPlus = function(){
 			data.pos[1] = lineEnd - len;
 		}
 	}
-	
+
 	function backspace(data) {
-		
+
 		if (selectionRange(data)) {
 			del(data);
 		} else if (data.pos[0] > 0) {
@@ -150,7 +152,7 @@ var textareaPlus = function(){
 			del(data);
 		}
 	}
-	
+
 	function unindent(data) {
 		if (inMultiLine(data)) {
 			multiUnindent(data);
@@ -161,7 +163,7 @@ var textareaPlus = function(){
 			home(data);
 		}
 	}
-	
+
 	function searchFrom(text, re, pos) {
 		pos = pos || 0;
 		var t = text.substr(pos);
@@ -171,7 +173,7 @@ var textareaPlus = function(){
 		}
 		return s + pos;
 	}
-	
+
 	function getTextStart(data, pos) {
 		var lineStart = getLineStart(data, pos);
 		pos = searchFrom(data.text, /[\S\n]/, lineStart);
@@ -180,11 +182,11 @@ var textareaPlus = function(){
 		}
 		return pos;
 	}
-	
+
 	function isTextStart(data) {
 		return getTextStart(data) == data.pos[1];
 	}
-	
+
 	function home(data) {
 		if (isTextStart(data)) {
 			data.pos[0] = getLineStart(data);
@@ -193,18 +195,18 @@ var textareaPlus = function(){
 		}
 		data.pos[1] = data.pos[0];
 	}
-	
+
 	function selectHome(data) {
 		var pos = data.pos[0];
 		home(data);
 		data.pos[0] = pos;
 	}
-	
+
 	function getIndents(data) {
 		var pos = takeRange(data);
 		var lineStart = getLineStart(data, pos[0]);
 		var len;
-		
+
 		var textStart = getTextStart(data, pos[0]);
 		// console.log(textStart);
 		if (textStart >= pos[0]) {
@@ -214,27 +216,46 @@ var textareaPlus = function(){
 		}
 		return data.text.substr(lineStart, len);
 	}
-	
+
 	function enter(data) {
-		// console.log(data);
 		var indents = getIndents(data);
+		var range = takeRange(data);
+		var p = data.text[range[0] - 1];
+		var q = data.text[range[1]];
 		insert(data, "\n" + indents);
+		if (p == "[" && q == "]" || p == "{" && q == "}") {
+			insert(data, "\t\n" + indents);
+			data.pos[0] -= indents.length + 1;
+			data.pos[1] -= indents.length + 1;
+		}
 	}
-	
+
+	function brace0(data){
+		insert(data, "[]");
+		data.pos[0]--;
+		data.pos[1]--;
+	}
+
+	function brace1(data){
+		insert(data, "{}");
+		data.pos[0]--;
+		data.pos[1]--;
+	}
+
 	function init(node, command) {
 		var data = {
 			text: node.value,
 			pos: [node.selectionStart, node.selectionEnd]
 		}, t;
-		
+
 		if (node.selectionDirection == "backward") {
 			t = data.pos[0];
 			data.pos[0] = data.pos[1];
 			data.pos[1] = t;
 		}
-		
+
 		editor[command](data);
-		
+
 		node.value = data.text;
 		if (data.pos[0] > data.pos[1]) {
 			node.setSelectionRange(data.pos[1], data.pos[0], "backward");
@@ -242,28 +263,28 @@ var textareaPlus = function(){
 			node.setSelectionRange(data.pos[0], data.pos[1], "forward");
 		}
 	}
-	
+
 	return init;
 }();
 
 function validArea(area) {
 	if (area.nodeName != "TEXTAREA") {
 		return false;
-	} 
-	
+	}
+
 	if (area.dataset.textareaPlus === "false") {
 		return false;
 	}
-	
+
 	if (area.dataset.textareaPlus === "true") {
 		return true;
 	}
-	
+
 	// if (area.onkeydown) {
 		// area.dataset.textareaPlus = "false";
 		// return false;
 	// }
-	
+
 	var node = area, i;
 	while ((node = node.parentNode) != document.body) {
 		for (i = 0; i < ignoreClassList.length; i++) {
@@ -273,39 +294,46 @@ function validArea(area) {
 			}
 		}
 	}
-	
+
 	area.dataset.textareaPlus = "true";
 	return true;
 }
 
 window.addEventListener("keydown", function(e){
-	if (!validArea(e.target)) {
+	if (!validArea(e.target) || e.ctrlKey || e.altKey) {
 		return;
 	}
-	
+
 	var command;
-	
-	if (e.keyCode == 9 && !e.ctrlKey && !e.altKey) {
+
+	if (e.keyCode == 9) {
 		// tab
 		if (e.shiftKey) {
 			command = "unindent";
 		} else {
 			command = "indent";
 		}
-	} else if (e.keyCode == 13 && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+	} else if (e.keyCode == 13) {
 		// enter
 		command = "enter";
-	} else if (e.keyCode == 36 && !e.ctrlKey && !e.altKey) {
+	} else if (e.keyCode == 36) {
 		// home
 		if (!e.shiftKey) {
 			command = "home";
 		} else {
 			command = "selectHome";
 		}
+	} else if (e.keyCode == 219) {
+		// braces
+		if (!e.shiftKey) {
+			command = "brace0";
+		} else {
+			command = "brace1";
+		}
 	} else {
 		return;
 	}
-	
+
 	e.preventDefault();
 	e.stopPropagation();
 

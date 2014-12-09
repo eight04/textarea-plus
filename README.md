@@ -6,6 +6,7 @@ Features
 --------
 * Tab in textarea.
 * Auto indent (notepad++ style).
+* Auto close braces.
 * Multi-line indent/unindent.
 * Smart home key.
 
@@ -15,11 +16,13 @@ Demo
 
 Todos
 -----
-* Auto close braces.
+* <del>Auto close braces.</del>
 
 Changelog
 ---------
-* 1.1
+* 1.1.1 (Dec 9, 2014)
+	- Auto close braces.
+* 1.1.0
 	- Fix direction issue when using Shift + Home/End.
 	- Changed how data.pos works. `pos[0]` will greater than `pos[1]` if direction is "backward".
 * 1.0.4
