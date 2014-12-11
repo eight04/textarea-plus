@@ -3,7 +3,7 @@
 // @description	An userscript to improve plain textarea for code editing.
 // @namespace   eight04.blogspot.com
 // @include     http*
-// @version     1.1
+// @version     1.1.1
 // @grant       GM_addStyle
 // ==/UserScript==
 
@@ -79,9 +79,10 @@ var textareaPlus = function(){
 		var pos = takeRange(data);
 		var lineStart = getLineStart(data, pos[0]), lineEnd = getLineEnd(data, pos[1]);
 		var lines = data.text.substr(lineStart, lineEnd - lineStart);
+		var i;
 
 		lines = lines.split("\n");
-		for (var i = 0; i < lines.length; i++) {
+		for (i = 0; i < lines.length; i++) {
 			lines[i] = "\t" + lines[i];
 		}
 		lines = lines.join("\n");
@@ -123,11 +124,12 @@ var textareaPlus = function(){
 		var pos = takeRange(data);
 		var lineStart = getLineStart(data, pos[0]), lineEnd = getLineEnd(data, pos[1]);
 		var lines = data.text.substr(lineStart, lineEnd - lineStart);
+		var i, m;
 
 		lines = lines.split("\n");
 		var len = 0;
-		for (var i = 0; i < lines.length; i++) {
-			var m = lines[i].match(/^( {4}| {0,3}\t?)(.*)$/);
+		for (i = 0; i < lines.length; i++) {
+			m = lines[i].match(/^( {4}| {0,3}\t?)(.*)$/);
 			// console.log(m);
 			len += m[1].length;
 			lines[i] = m[2];
