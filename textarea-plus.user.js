@@ -102,7 +102,7 @@ var textareaPlus = function(){
 		if (s < 0) {
 			return false;
 		}
-		return  s < pos[1];
+		return s < pos[1];
 	}
 
 	function indent(data){
@@ -305,6 +305,9 @@ window.addEventListener("keydown", function(e){
 	if (!validArea(e.target) || e.ctrlKey || e.altKey) {
 		return;
 	}
+	if (e.defaultPrevented) {
+		return;
+	}
 
 	var command;
 
@@ -337,9 +340,8 @@ window.addEventListener("keydown", function(e){
 	}
 
 	e.preventDefault();
-	e.stopPropagation();
 
 	textareaPlus(e.target, command);
-}, true);
+}, false);
 
 GM_addStyle("textarea {tab-size: 4; -moz-tab-size: 4; -o-tab-size: 4;}");
