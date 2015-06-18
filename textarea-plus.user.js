@@ -3,7 +3,7 @@
 // @description	An userscript to improve plain textarea for code editing.
 // @namespace   eight04.blogspot.com
 // @include     http*
-// @version     1.1.1
+// @version     1.1.2
 // @grant       GM_addStyle
 // ==/UserScript==
 

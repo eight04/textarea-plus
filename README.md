@@ -20,6 +20,8 @@ Todos
 
 Changelog
 ---------
+* 1.1.2 (Jun 18, 2015)
+	- Do not use capture flag.
 * 1.1.1 (Dec 9, 2014)
 	- Auto close braces.
 * 1.1.0
