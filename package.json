@@ -15,7 +15,8 @@
   "scripts": {
     "test": "eslint *.js",
     "preversion": "npm test",
-    "version": "sync-version textarea-plus.user.js && git add ."
+    "version": "sync-version textarea-plus.user.js && git add .",
+    "postversion": "git push --follow-tags"
   },
   "private": true,
   "devDependencies": {
