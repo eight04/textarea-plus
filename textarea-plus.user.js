@@ -7,267 +7,256 @@
 // @grant       GM_addStyle
 // ==/UserScript==
 
-"use strict";
-
-var ignoreClassList = ["CodeMirror", "ace_editor"];
-
-var textareaPlus = function(){
-
-	var editor = {
-		indent: indent,
-		unindent: unindent,
-		home: home,
-		selectHome: selectHome,
-		enter: enter,
-		brace0: brace0,
-		brace1: brace1
-	};
-
-	function selectionRange(data){
-		return data.pos[1] - data.pos[0];
+class Editor {
+	constructor(textarea) {
+		this.el = textarea;
 	}
 
-	function takeRange(data) {
-		if (data.pos[0] > data.pos[1]) {
-			return [data.pos[1], data.pos[0]];
-		}
-		return data.pos;
+	getSelectionRange() {
+		return {
+			start: this.el.selectionStart,
+			end: this.el.selectionEnd
+		};
 	}
 
-	function insert(data, text){
-		var pos = takeRange(data);
-		data.text = data.text.substr(0, pos[0]) + text + data.text.substr(pos[1]);
-		data.pos[0] = pos[0] + text.length;
-		data.pos[1] = data.pos[0];
+	setSelectionRange(start, end) {
+		this.el.setSelectionRange(start, end);
 	}
 
-	function del(data){
-		if (!selectionRange(data)) {
-			data.pos[1]++;
+	getCaretPos(collapse = false) {
+		if (this.el.selectionDirection == "backward" || collapse) {
+			return this.el.selectionStart;
 		}
-		insert(data, "");
+		return this.el.selectionEnd;
 	}
-
-	function getLineStart(data, pos){
-		if (pos == undefined) {
-			pos = data.pos[1];
-		}
-
-		if (data.text[pos] == "\n") {
-			pos--;
-		}
-
-		var s = data.text.lastIndexOf("\n", pos);
-		if (s < 0) {
-			return 0;
-		}
-		return s + 1;
-	}
-
-	function getLineEnd(data, pos){
-		if (pos == undefined) {
-			pos = data.pos[1];
-		}
-		var s = data.text.indexOf("\n", pos);
-		if (s < 0) {
-			return data.text.length;
-		}
-		return s;
-	}
-
-	function multiIndent(data){
-		var pos = takeRange(data);
-		var lineStart = getLineStart(data, pos[0]), lineEnd = getLineEnd(data, pos[1]);
-		var lines = data.text.substr(lineStart, lineEnd - lineStart);
-		var i;
-
-		lines = lines.split("\n");
-		for (i = 0; i < lines.length; i++) {
-			lines[i] = "\t" + lines[i];
-		}
-		lines = lines.join("\n");
-		data.text = data.text.substr(0, lineStart) + lines + data.text.substr(lineEnd);
-		if (data.pos[0] > data.pos[1]) {
-			data.pos[1] = lineStart;
-			data.pos[0] = lineEnd + i;
+	
+	setCaretPos(pos, collapse = false) {
+		if (collapse) {
+			this.setSelectionRange(pos, pos);
 		} else {
-			data.pos[0] = lineStart;
-			data.pos[1] = lineEnd + i;
+			var start = this.el.selectionStart,
+				end = this.el.selectionEnd,
+				dir = this.el.selectionDirection;
+				
+			if (dir == "backward") {
+				[start, end] = [end, start];
+				dir = "forward";
+			}
+			end = pos;
+			if (end < start) {
+				[start, end] = [end, start];
+				dir = "backward";
+			}
+			this.el.selectionEnd = end;
+			this.el.selectionStart = start;
+			this.el.selectionDirection = dir;
 		}
 	}
 
-	function inMultiLine(data) {
-		var pos = takeRange(data);
-		var s = data.text.indexOf("\n", pos[0]);
-		if (s < 0) {
+	getLineRange(start, end) {
+		var content = this.getContent(),
+			i, j;
+		i = content.lastIndexOf("\n", start - 1) + 1;
+		if (content[end - 1] == "\n") {
+			j = end;
+		} else {
+			j = content.indexOf("\n", end) + 1;
+			if (j == 0) {
+				j = content.length;
+			}
+		}
+		return {
+			start: i,
+			end: j
+		};
+	}
+
+	getSelectionLineRange() {
+		var range = this.getSelectionRange();
+		return this.getLineRange(range.start, range.end);
+	}
+
+	getSelectionLine() {
+		var content = this.getContent(),
+			range = this.getSelectionLineRange();
+		return content.slice(range.start, range.end);
+	}
+
+	getCurrentLineRange() {
+		var pos = this.getCaretPos();
+		return this.getLineRange(pos, pos);
+	}
+
+	getCurrentLine() {
+		var range = this.getCurrentLineRange(),
+			content = this.getContent();
+		return content.slice(range.start, range.end);
+	}
+
+	getContent() {
+		return this.el.value;
+	}
+
+	getSelection() {
+		var content = this.getContent(),
+			range = this.getSelectionRange();
+		return content.slice(range.start, range.end);
+	}
+
+	setRangeText(...args) {
+		this.el.setRangeText(...args);
+	}
+}
+
+var braceMatch = {
+	"[": "]",
+	"{": "}",
+	"(": ")"
+};
+
+class Commands {
+	constructor(editor) {
+		this.editor = editor;
+		this.indentSize = 4;
+		this.indentChar = "\t";
+	}
+	sameLine() {
+		return !this.editor.getSelection().includes("\n");
+	}
+	betweenText() {
+		var line = this.editor.getSelectionLine(),
+			pos = this.editor.getCaretPos(),
+			lineRange = this.editor.getSelectionLineRange(),
+			match = line.match(/\S/);
+		if (!match) {
 			return false;
 		}
-		return s < pos[1];
+		return pos >= lineRange.start + match.index;
 	}
-
-	function indent(data){
-		if (!selectionRange(data)) {
-			insert(data, "\t");
-			if (data.pos[0] < getTextStart(data)) {
-				home(data);
-			}
-		} else {
-			if (inMultiLine(data)) {
-				multiIndent(data);
+	getIndentInfo(text) {
+		var i, count = 0;
+		for (i = 0; i < text.length; i++) {
+			var c = text[i];
+			if (c == " ") {
+				count++;
+			} else if (c == "\t") {
+				count += 4;
 			} else {
-				insert(data, "\t");
+				break;
 			}
 		}
+		return {
+			count: Math.floor(count / this.indentSize),
+			length: i
+		};
 	}
-
-	function multiUnindent(data){
-		var pos = takeRange(data);
-		var lineStart = getLineStart(data, pos[0]), lineEnd = getLineEnd(data, pos[1]);
-		var lines = data.text.substr(lineStart, lineEnd - lineStart);
-		var i, m;
-
-		lines = lines.split("\n");
-		var len = 0;
-		for (i = 0; i < lines.length; i++) {
-			m = lines[i].match(/^( {4}| {0,3}\t?)(.*)$/);
-			// console.log(m);
-			len += m[1].length;
-			lines[i] = m[2];
-		}
-		lines = lines.join("\n");
-		data.text = data.text.substr(0, lineStart) + lines + data.text.substr(lineEnd);
-		if (data.pos[0] > data.pos[1]) {
-			data.pos[1] = lineStart;
-			data.pos[0] = lineEnd - len;
+	indent() {
+		if (this.sameLine()) {
+			var range = this.editor.getSelectionLineRange(),
+				line = this.editor.getSelectionLine(),
+				indent = this.getIndentInfo(line),
+				pos = this.editor.getSelectionRange().start;
+			if (pos >= range.start + indent.length) {
+				this.editor.setRangeText(
+					this.indentChar,
+					pos,
+					pos,
+					"end"
+				);
+			} else {
+				this.editor.setRangeText(
+					this.indentChar.repeat(indent.count + 1),
+					range.start,
+					range.start + indent.length,
+					"end"
+				);
+			}
 		} else {
-			data.pos[0] = lineStart;
-			data.pos[1] = lineEnd - len;
+			this.multiIndent();
 		}
+		return true;
 	}
-
-	function backspace(data) {
-
-		if (selectionRange(data)) {
-			del(data);
-		} else if (data.pos[0] > 0) {
-			data.pos[0]--;
-			del(data);
-		}
+	multiIndent(diff = 1) {
+		var lines = this.editor.getSelectionLine().split("\n"),
+			range = this.editor.getSelectionLineRange();
+		lines = lines.map(line => {
+			if (!line) return line;
+			var indent = this.getIndentInfo(line),
+				count = indent.count + diff;
+			if (count < 0) count = 0;
+			return this.indentChar.repeat(count) + line.slice(indent.length);
+		}).join("\n");
+		this.editor.setRangeText(lines, range.start, range.end, "select");
 	}
-
-	function unindent(data) {
-		if (inMultiLine(data)) {
-			multiUnindent(data);
-		} else if (!selectionRange(data) && data.text[data.pos[0] - 1] == "\t") {
-			backspace(data);
+	unindent() {
+		if (this.sameLine()) {
+			var range = this.editor.getSelectionLineRange(),
+				line = this.editor.getSelectionLine(),
+				indent = this.getIndentInfo(line),
+				pos = this.editor.getCaretPos(true);
+			if (pos <= range.start + indent.length && indent.count) {
+				this.editor.setRangeText(
+					this.indentChar.repeat(indent.count - 1),
+					range.start,
+					range.start + indent.length,
+					"end"
+				);
+			} else if (line.slice(0, pos - range.start).endsWith(this.indentChar)) {
+				this.editor.setRangeText(
+					"", pos - this.indentChar.length, pos, "end"
+				);
+			}
 		} else {
-			multiUnindent(data);
-			home(data);
+			this.multiIndent(-1);
 		}
+		return true;
 	}
-
-	function searchFrom(text, re, pos) {
-		pos = pos || 0;
-		var t = text.substr(pos);
-		var s = t.search(re);
-		if (s < 0) {
-			return -1;
-		}
-		return s + pos;
-	}
-
-	function getTextStart(data, pos) {
-		var lineStart = getLineStart(data, pos);
-		pos = searchFrom(data.text, /[\S\n]/, lineStart);
-		if (pos < 0 || data.text[pos] == "\n") {
-			return getLineEnd(data);
-		}
-		return pos;
-	}
-
-	function isTextStart(data) {
-		return getTextStart(data) == data.pos[1];
-	}
-
-	function home(data) {
-		if (isTextStart(data)) {
-			data.pos[0] = getLineStart(data);
+	smartHome(collapse = false) {
+		var line = this.editor.getCurrentLine(),
+			range = this.editor.getCurrentLineRange(),
+			pos = this.editor.getCaretPos(collapse) - range.start,
+			indent = this.getIndentInfo(line);
+		if (pos == indent.length) {
+			this.editor.setCaretPos(range.start, collapse);
 		} else {
-			data.pos[0] = getTextStart(data);
+			this.editor.setCaretPos(range.start + indent.length, collapse);
 		}
-		data.pos[1] = data.pos[0];
+		return true;
 	}
+	newLineIndent() {
+		var content = this.editor.getContent(),
+			range = this.editor.getSelectionRange(),
+			line = this.editor.getSelectionLine(),
+			indent = this.getIndentInfo(line),
+			out = "\n", pos,
+			left = content[range.start - 1],
+			right = content[range.end];
 
-	function selectHome(data) {
-		var pos = data.pos[0];
-		home(data);
-		data.pos[0] = pos;
-	}
-
-	function getIndents(data) {
-		var pos = takeRange(data);
-		var lineStart = getLineStart(data, pos[0]);
-		var len;
-
-		var textStart = getTextStart(data, pos[0]);
-		// console.log(textStart);
-		if (textStart >= pos[0]) {
-			len = pos[0] - lineStart;
+		if (/[\[{(]/.test(left)) {
+			out += this.indentChar.repeat(indent.count + 1);
 		} else {
-			len = textStart - lineStart;
+			out += line.slice(0, indent.length);
 		}
-		return data.text.substr(lineStart, len);
-	}
-
-	function enter(data) {
-		var indents = getIndents(data);
-		var range = takeRange(data);
-		var p = data.text[range[0] - 1];
-		var q = data.text[range[1]];
-		insert(data, "\n" + indents);
-		if (p == "[" && q == "]" || p == "{" && q == "}") {
-			insert(data, "\t\n" + indents);
-			data.pos[0] -= indents.length + 1;
-			data.pos[1] -= indents.length + 1;
+		pos = range.start + out.length;
+		if (right == braceMatch[left]) {
+			out += "\n" + line.slice(0, indent.length);
 		}
+		this.editor.setRangeText(out);
+		this.editor.setSelectionRange(pos, pos);
+		return true;
 	}
-
-	function brace0(data){
-		insert(data, "[]");
-		data.pos[0]--;
-		data.pos[1]--;
+	completeBraces(left) {
+		var right = braceMatch[left];
+		if (!right) return false;
+		var text = this.editor.getSelection(),
+			range = this.editor.getSelectionRange();
+		this.editor.setRangeText(left + text + right, range.start, range.end);
+		this.editor.setSelectionRange(range.start + 1, range.start + 1 + text.length);
+		return true;
 	}
+}
 
-	function brace1(data){
-		insert(data, "{}");
-		data.pos[0]--;
-		data.pos[1]--;
-	}
-
-	function init(node, command) {
-		var data = {
-			text: node.value,
-			pos: [node.selectionStart, node.selectionEnd]
-		}, t;
-
-		if (node.selectionDirection == "backward") {
-			t = data.pos[0];
-			data.pos[0] = data.pos[1];
-			data.pos[1] = t;
-		}
-
-		editor[command](data);
-
-		node.value = data.text;
-		if (data.pos[0] > data.pos[1]) {
-			node.setSelectionRange(data.pos[1], data.pos[0], "backward");
-		} else {
-			node.setSelectionRange(data.pos[0], data.pos[1], "forward");
-		}
-	}
-
-	return init;
-}();
+var ignoreClassList = ["CodeMirror", "ace_editor"];
 
 function validArea(area) {
 	if (area.nodeName != "TEXTAREA") {
@@ -281,11 +270,6 @@ function validArea(area) {
 	if (area.dataset.textareaPlus === "true") {
 		return true;
 	}
-
-	// if (area.onkeydown) {
-		// area.dataset.textareaPlus = "false";
-		// return false;
-	// }
 
 	var node = area, i;
 	while ((node = node.parentNode) != document.body) {
@@ -309,39 +293,33 @@ window.addEventListener("keydown", function(e){
 		return;
 	}
 
-	var command;
+	function commands() {
+		return new Commands(new Editor(e.target));
+	}
+
+	var result = false;
 
 	if (e.keyCode == 9) {
 		// tab
 		if (e.shiftKey) {
-			command = "unindent";
+			result = commands().unindent();
 		} else {
-			command = "indent";
+			result = commands().indent();
 		}
 	} else if (e.keyCode == 13) {
 		// enter
-		command = "enter";
+		result = commands().newLineIndent();
 	} else if (e.keyCode == 36) {
 		// home
-		if (!e.shiftKey) {
-			command = "home";
-		} else {
-			command = "selectHome";
-		}
-	} else if (e.keyCode == 219) {
+		result = commands().smartHome(!e.shiftKey);
+	} else if (braceMatch[e.key]) {
 		// braces
-		if (!e.shiftKey) {
-			command = "brace0";
-		} else {
-			command = "brace1";
-		}
-	} else {
-		return;
+		result = commands().completeBraces(e.key);
 	}
 
-	e.preventDefault();
-
-	textareaPlus(e.target, command);
-}, false);
+	if (result) {
+		e.preventDefault();
+	}
+});
 
 GM_addStyle("textarea {tab-size: 4; -moz-tab-size: 4; -o-tab-size: 4;}");
