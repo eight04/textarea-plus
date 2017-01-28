@@ -14,10 +14,6 @@ Demo
 ----
 <https://rawgit.com/eight04/textarea-plus/master/demo.html>
 
-Todos
------
-* <del>Auto close braces.</del>
-
 Changelog
 ---------
 * 1.1.2 (Jun 18, 2015)

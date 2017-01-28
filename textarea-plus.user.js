@@ -2,7 +2,7 @@
 // @name        Textarea Plus
 // @description	An userscript to improve plain textarea for code editing.
 // @namespace   eight04.blogspot.com
-// @include     http*
+// @include     *
 // @version     1.1.2
 // @grant       GM_addStyle
 // ==/UserScript==

@@ -1,0 +1,25 @@
+{
+  "name": "textarea-plus",
+  "version": "1.1.2",
+  "description": "Have a better textarea! An userscript to improve plain textarea for code editing.",
+  "keywords": [
+    "userscript",
+    "textarea"
+  ],
+  "homepage": "https://github.com/eight04/textarea-plus",
+  "bugs": "https://github.com/eight04/textarea-plus/issues",
+  "license": "MIT",
+  "author": "eight04 <eight04@gmail.com>",
+  "main": "textarea-plus.user.js",
+  "repository": "eight04/textarea-plus",
+  "scripts": {
+    "test": "eslint *.js",
+    "preversion": "npm test",
+    "version": "sync-version textarea-plus.user.js && git add ."
+  },
+  "private": true,
+  "devDependencies": {
+    "eslint": "^3.14.1",
+    "sync-version": "^1.0.0"
+  }
+}
