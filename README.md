@@ -16,6 +16,8 @@ Demo
 
 Changelog
 ---------
+* 2.0.1 (Jan 29, 2017)
+	- Fix smart home bug.
 * 2.0.0 (Jan 28, 2017)
 	- Rewrite.
 	- Change the behavior of braces when selection is not empty.
