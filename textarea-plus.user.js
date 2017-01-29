@@ -57,13 +57,9 @@ class Editor {
 		var content = this.getContent(),
 			i, j;
 		i = content.lastIndexOf("\n", start - 1) + 1;
-		if (content[end - 1] == "\n") {
-			j = end;
-		} else {
-			j = content.indexOf("\n", end) + 1;
-			if (j == 0) {
-				j = content.length;
-			}
+		j = content.indexOf("\n", end);
+		if (j < 0) {
+			j = content.length;
 		}
 		return {
 			start: i,
@@ -177,16 +173,22 @@ class Commands {
 		return true;
 	}
 	multiIndent(diff = 1) {
-		var lines = this.editor.getSelectionLine().split("\n"),
-			range = this.editor.getSelectionLineRange();
-		lines = lines.map(line => {
+		var range = this.editor.getSelectionRange(),
+			lines = this.editor.getSelectionLine(),
+			lineRange = this.editor.getSelectionLineRange();
+		if (lines[range.end - lineRange.start - 1] == "\n") {
+			lineRange.end = range.end - 1;
+			lines = lines.slice(0, range.end - lineRange.start - 1);
+		}
+		lines = lines.split("\n").map(line => {
 			if (!line) return line;
 			var indent = this.getIndentInfo(line),
 				count = indent.count + diff;
 			if (count < 0) count = 0;
 			return this.indentChar.repeat(count) + line.slice(indent.length);
 		}).join("\n");
-		this.editor.setRangeText(lines, range.start, range.end, "select");
+		this.editor.setRangeText(lines, lineRange.start, lineRange.end);
+		this.editor.setSelectionRange(lineRange.start, lineRange.start + lines.length + 1);
 	}
 	unindent() {
 		if (this.sameLine()) {
