@@ -10,12 +10,18 @@ Features
 * Multi-line indent/unindent.
 * Smart home key.
 
+Install
+-------
+<https://greasyfork.org/scripts/4949-textarea-plus>
+
 Demo
 ----
 <https://rawgit.com/eight04/textarea-plus/master/demo.html>
 
 Changelog
 ---------
+* 2.0.2 (Mar 16, 2017)
+	- Fix new line indent bug.
 * 2.0.1 (Jan 29, 2017)
 	- Fix smart home bug.
 * 2.0.0 (Jan 28, 2017)
