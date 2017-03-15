@@ -229,6 +229,7 @@ class Commands {
 		var content = this.editor.getContent(),
 			range = this.editor.getSelectionRange(),
 			line = this.editor.getSelectionLine(),
+			lineRange = this.editor.getLineRange(range.start, range.start),
 			indent = this.getIndentInfo(line),
 			out = "\n", pos,
 			left = content[range.start - 1],
@@ -237,7 +238,7 @@ class Commands {
 		if (/[\[{(]/.test(left)) {
 			out += this.indentChar.repeat(indent.count + 1);
 		} else {
-			out += line.slice(0, indent.length);
+			out += line.slice(0, Math.min(indent.length, range.start - lineRange.start));
 		}
 		pos = range.start + out.length;
 		if (right == braceMatch[left]) {
