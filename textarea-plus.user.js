@@ -5,6 +5,12 @@
 // @include     *
 // @version     2.0.2
 // @grant       GM_addStyle
+// @author		eight
+// @homepage	https://github.com/eight04/textarea-plus
+// @supportURL	https://github.com/eight04/textarea-plus/issues
+// @license		MIT
+// @compatible	firefox
+// @compatible	chrome
 // ==/UserScript==
 
 class Editor {
