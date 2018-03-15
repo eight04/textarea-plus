@@ -9,6 +9,7 @@ Features
 * Auto close braces.
 * Multi-line indent/unindent.
 * Smart home key.
+* Configurable indent style and indent size.
 
 Install
 -------
