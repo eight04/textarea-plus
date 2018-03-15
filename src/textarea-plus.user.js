@@ -1,7 +1,5 @@
 // $inline.line("cmd:userscript-meta")
-
 // $inline.line("../dist/textarea-plus.js")
-
 /* eslint-env browser, greasemonkey */
 /* global textareaPlus GM_config */
 

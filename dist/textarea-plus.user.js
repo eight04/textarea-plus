@@ -1,4 +1,20 @@
-
+// ==UserScript==
+// @name Textarea Plus
+// @version 2.0.2
+// @description Have a better textarea! A userscript which can improve plain textarea for code editing.
+// @homepageURL https://github.com/eight04/textarea-plus
+// @supportURL https://github.com/eight04/textarea-plus/issues
+// @license MIT
+// @author eight04 <eight04@gmail.com>
+// @namespace eight04.blogspot.com
+// @include *
+// @grant GM_getValue
+// @grant GM_setValue
+// @grant GM_registerMenuCommand
+// @grant GM_addStyle
+// @compatible firefox Tampermonkey latest
+// @compatible chrome Tampermonkey latest
+// ==/UserScript==
 
 var textareaPlus = (function () {
 'use strict';
@@ -221,7 +237,6 @@ var textareaPlus = {createCommandExecutor};
 return textareaPlus;
 
 }());
-
 
 /* eslint-env browser, greasemonkey */
 /* global textareaPlus GM_config */
