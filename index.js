@@ -138,7 +138,7 @@ function runNewLine({editor, options}) {
     out += line.slice(0, Math.min(indent.length, range.start - lineRange.start));
   }
   pos = range.start + out.length;
-  if (right == BRACES[left]) {
+  if (BRACES[left] && right == BRACES[left]) {
     out += "\n" + line.slice(0, indent.length);
   }
   editor.setRangeText(out);
