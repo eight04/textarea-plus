@@ -39,7 +39,7 @@ function runIndent({editor, options}) {
     line = editor.getSelectionLine(),
     indent = getIndentInfo(line, options),
     pos = editor.getSelectionRange().start;
-  if (pos >= range.start + indent.length) {
+  if (pos > range.start + indent.length) {
     editor.setRangeText(
       getIndentChar(options),
       pos,
@@ -67,9 +67,10 @@ function runUnindent({editor, options}) {
     pos = editor.getCaretPos(true),
     indentChar = getIndentChar(options);
     
-  if (pos <= range.start + indent.length && indent.count) {
+  const indentCount = indent.count + (indent.extraSpaces ? 1 : 0);
+  if (pos <= range.start + indent.length && indentCount) {
     editor.setRangeText(
-      indentChar.repeat(indent.count + (indent.extraSpaces ? 1 : 0) - 1),
+      indentChar.repeat(indentCount - 1),
       range.start,
       range.start + indent.length,
       "end"
@@ -93,7 +94,11 @@ function runMultiIndent(editor, options, diff = 1) {
     if (!line) return line;
     var indent = getIndentInfo(line, options),
       count = indent.count + diff;
-    if (count < 0) count = 0;
+    if (count < 0) {
+      count = 0;
+      // remove extra space when there is no indent
+      indent.extraSpaces = 0;
+    }
     return getIndentChar(options).repeat(count) +
       " ".repeat(indent.extraSpaces) +
       line.slice(indent.length);

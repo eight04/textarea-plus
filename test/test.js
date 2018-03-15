@@ -143,6 +143,8 @@ describe("commandExecutor.run", () => {
     test("|abc", "\t|abc");
     test("a|bc", "a\t|bc");
     test("|\tabc", "\t\t|abc");
+    // extra spaces
+    test(" |abc", "\t|abc");
   });
   
   it("unindent", () => {
@@ -151,12 +153,15 @@ describe("commandExecutor.run", () => {
     test("\t|abc", "|abc");
     test("a\t|bc", "a|bc");
     test("|\tabc", "|abc");
+    // extra spaces
+    test(" |abc", "|abc");
   });
   
   it("multiline indent", () => {
     const test = createTest("Tab");
     test("a[bc\nab]c", "[\tabc\n\tabc]");
     test("a[bc\n\tab]c", "[\tabc\n\t\tabc]");
+    // extra spaces
     test("a[bc\n\tabc\n\t  ab]c", "[\tabc\n\t\tabc\n\t\t  abc]");
   });
   
@@ -165,6 +170,8 @@ describe("commandExecutor.run", () => {
     test("\ta[bc\n\tab]c", "[abc\nabc]");
     test("\ta[bc\n\t\tab]c", "[abc\n\tabc]");
     test("\ta[bc\n\t\tabc\n\t\t  ab]c", "[abc\n\tabc\n\t  abc]");
+    // extra spaces
+    test("a[bc\n ab]c", "[abc\nabc]");
   });
   
   it("smarthome", () => {
