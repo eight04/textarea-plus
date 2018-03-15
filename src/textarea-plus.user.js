@@ -154,7 +154,7 @@ GM_config.setup({
 }, () => {
   const options = GM_config.get();
   options.completeBraces = createMap(options.completeBraces);
-  commandExcutor = textareaPlus.createCommandExcutor(options);
+  commandExcutor = textareaPlus.createCommandExecutor(options);
   if (styleEl) styleEl.remove();
   styleEl = GM_addStyle(`
     textarea {
@@ -168,11 +168,12 @@ GM_config.setup({
     const map = {__proto__: null};
     for (const pair of text.split(/\s+/g)) {
       if (pair.length == 2) {
-        map[pair[0]] = map[pair[1]];
+        map[pair[0]] = pair[1];
       } else if (pair.length != 0) {
         alert(`Invalid pair: ${pair}`);
       }
     }
+    return map;
   }
 });
 

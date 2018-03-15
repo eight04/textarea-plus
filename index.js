@@ -1,7 +1,7 @@
 /* eslint-env node */
 
 function isSameLine(editor) {
-  return editor.getSelection().includes("\n");
+  return !editor.getSelection().includes("\n");
 }
 
 function getIndentInfo(text, {indentSize}) {
@@ -41,7 +41,7 @@ function runIndent({editor, options}) {
     pos = editor.getSelectionRange().start;
   if (pos >= range.start + indent.length) {
     editor.setRangeText(
-      getIndentChar(options.indentStyle),
+      getIndentChar(options),
       pos,
       pos,
       "end"
@@ -127,7 +127,7 @@ function runNewLine({editor, options}) {
     range = editor.getSelectionRange(),
     line = editor.getSelectionLine(),
     lineRange = editor.getLineRange(range.start, range.start),
-    indent = getIndentInfo(line),
+    indent = getIndentInfo(line, options),
     out = "\n", pos,
     left = content[range.start - 1],
     right = content[range.end];

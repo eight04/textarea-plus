@@ -14,6 +14,7 @@
 // @grant GM_addStyle
 // @compatible firefox Tampermonkey latest
 // @compatible chrome Tampermonkey latest
+// @require https://greasyfork.org/scripts/7212-gm-config-eight-s-version/code/GM_config%20(eight's%20version).js?version=156587
 // ==/UserScript==
 
 var textareaPlus = (function () {
@@ -22,7 +23,7 @@ var textareaPlus = (function () {
 /* eslint-env node */
 
 function isSameLine(editor) {
-  return editor.getSelection().includes("\n");
+  return !editor.getSelection().includes("\n");
 }
 
 function getIndentInfo(text, {indentSize}) {
@@ -62,7 +63,7 @@ function runIndent({editor, options}) {
     pos = editor.getSelectionRange().start;
   if (pos >= range.start + indent.length) {
     editor.setRangeText(
-      getIndentChar(options.indentStyle),
+      getIndentChar(options),
       pos,
       pos,
       "end"
@@ -148,7 +149,7 @@ function runNewLine({editor, options}) {
     range = editor.getSelectionRange(),
     line = editor.getSelectionLine(),
     lineRange = editor.getLineRange(range.start, range.start),
-    indent = getIndentInfo(line),
+    indent = getIndentInfo(line, options),
     out = "\n", pos,
     left = content[range.start - 1],
     right = content[range.end];
@@ -392,7 +393,7 @@ GM_config.setup({
 }, () => {
   const options = GM_config.get();
   options.completeBraces = createMap(options.completeBraces);
-  commandExcutor = textareaPlus.createCommandExcutor(options);
+  commandExcutor = textareaPlus.createCommandExecutor(options);
   if (styleEl) styleEl.remove();
   styleEl = GM_addStyle(`
     textarea {
@@ -406,11 +407,12 @@ GM_config.setup({
     const map = {__proto__: null};
     for (const pair of text.split(/\s+/g)) {
       if (pair.length == 2) {
-        map[pair[0]] = map[pair[1]];
+        map[pair[0]] = pair[1];
       } else if (pair.length != 0) {
         alert(`Invalid pair: ${pair}`);
       }
     }
+    return map;
   }
 });
 
