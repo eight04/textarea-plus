@@ -9,9 +9,12 @@
 // @homepage	https://github.com/eight04/textarea-plus
 // @supportURL	https://github.com/eight04/textarea-plus/issues
 // @license		MIT
-// @compatible	firefox
-// @compatible	chrome
+// @compatible	firefox Tampermonkey latest
+// @compatible	chrome Tampermonkey latest
+// @require https://greasyfork.org/scripts/7212-gm-config-eight-s-version/code/GM_config%20(eight's%20version).js?version=156587
 // ==/UserScript==
+
+/* global textareaPlus GM_config */
 
 class Editor {
 	constructor(textarea) {
@@ -110,161 +113,6 @@ class Editor {
 	}
 }
 
-var braceMatch = {
-	"[": "]",
-	"{": "}",
-	"(": ")"
-};
-
-class Commands {
-	constructor(editor) {
-		this.editor = editor;
-		this.indentSize = 4;
-		this.indentChar = "\t";
-	}
-	sameLine() {
-		return !this.editor.getSelection().includes("\n");
-	}
-	betweenText() {
-		var line = this.editor.getSelectionLine(),
-			pos = this.editor.getCaretPos(),
-			lineRange = this.editor.getSelectionLineRange(),
-			match = line.match(/\S/);
-		if (!match) {
-			return false;
-		}
-		return pos >= lineRange.start + match.index;
-	}
-	getIndentInfo(text) {
-		var i, count = 0;
-		for (i = 0; i < text.length; i++) {
-			var c = text[i];
-			if (c == " ") {
-				count++;
-			} else if (c == "\t") {
-				count += 4;
-			} else {
-				break;
-			}
-		}
-		return {
-			count: Math.floor(count / this.indentSize),
-			length: i
-		};
-	}
-	indent() {
-		if (this.sameLine()) {
-			var range = this.editor.getSelectionLineRange(),
-				line = this.editor.getSelectionLine(),
-				indent = this.getIndentInfo(line),
-				pos = this.editor.getSelectionRange().start;
-			if (pos >= range.start + indent.length) {
-				this.editor.setRangeText(
-					this.indentChar,
-					pos,
-					pos,
-					"end"
-				);
-			} else {
-				this.editor.setRangeText(
-					this.indentChar.repeat(indent.count + 1),
-					range.start,
-					range.start + indent.length,
-					"end"
-				);
-			}
-		} else {
-			this.multiIndent();
-		}
-		return true;
-	}
-	multiIndent(diff = 1) {
-		var range = this.editor.getSelectionRange(),
-			lines = this.editor.getSelectionLine(),
-			lineRange = this.editor.getSelectionLineRange();
-		if (lines[range.end - lineRange.start - 1] == "\n") {
-			lineRange.end = range.end - 1;
-			lines = lines.slice(0, range.end - lineRange.start - 1);
-		}
-		lines = lines.split("\n").map(line => {
-			if (!line) return line;
-			var indent = this.getIndentInfo(line),
-				count = indent.count + diff;
-			if (count < 0) count = 0;
-			return this.indentChar.repeat(count) + line.slice(indent.length);
-		}).join("\n");
-		this.editor.setRangeText(lines, lineRange.start, lineRange.end);
-		this.editor.setSelectionRange(lineRange.start, lineRange.start + lines.length + 1);
-	}
-	unindent() {
-		if (this.sameLine()) {
-			var range = this.editor.getSelectionLineRange(),
-				line = this.editor.getSelectionLine(),
-				indent = this.getIndentInfo(line),
-				pos = this.editor.getCaretPos(true);
-			if (pos <= range.start + indent.length && indent.count) {
-				this.editor.setRangeText(
-					this.indentChar.repeat(indent.count - 1),
-					range.start,
-					range.start + indent.length,
-					"end"
-				);
-			} else if (line.slice(0, pos - range.start).endsWith(this.indentChar)) {
-				this.editor.setRangeText(
-					"", pos - this.indentChar.length, pos, "end"
-				);
-			}
-		} else {
-			this.multiIndent(-1);
-		}
-		return true;
-	}
-	smartHome(collapse = false) {
-		var line = this.editor.getCurrentLine(),
-			range = this.editor.getCurrentLineRange(),
-			pos = this.editor.getCaretPos(collapse) - range.start,
-			indent = this.getIndentInfo(line);
-		if (pos == indent.length) {
-			this.editor.setCaretPos(range.start, collapse);
-		} else {
-			this.editor.setCaretPos(range.start + indent.length, collapse);
-		}
-		return true;
-	}
-	newLineIndent() {
-		var content = this.editor.getContent(),
-			range = this.editor.getSelectionRange(),
-			line = this.editor.getSelectionLine(),
-			lineRange = this.editor.getLineRange(range.start, range.start),
-			indent = this.getIndentInfo(line),
-			out = "\n", pos,
-			left = content[range.start - 1],
-			right = content[range.end];
-
-		if (/[\[{(]/.test(left)) {
-			out += this.indentChar.repeat(indent.count + 1);
-		} else {
-			out += line.slice(0, Math.min(indent.length, range.start - lineRange.start));
-		}
-		pos = range.start + out.length;
-		if (right == braceMatch[left]) {
-			out += "\n" + line.slice(0, indent.length);
-		}
-		this.editor.setRangeText(out);
-		this.editor.setSelectionRange(pos, pos);
-		return true;
-	}
-	completeBraces(left) {
-		var right = braceMatch[left];
-		if (!right) return false;
-		var text = this.editor.getSelection(),
-			range = this.editor.getSelectionRange();
-		this.editor.setRangeText(left + text + right, range.start, range.end);
-		this.editor.setSelectionRange(range.start + 1, range.start + 1 + text.length);
-		return true;
-	}
-}
-
 var ignoreClassList = ["CodeMirror", "ace_editor"];
 
 function validArea(area) {
@@ -294,6 +142,53 @@ function validArea(area) {
 	return true;
 }
 
+let commandExcutor, styleEl;
+
+GM_config.setup({
+  indentSize: {
+    label: "Indent size",
+    type: "number",
+    default: 4
+  },
+  indentStyle: {
+    label: "Indent style",
+    type: "radio",
+    default: "TAB",
+    options: {
+      TAB: "Tab",
+      SPACE: "Space"
+    }
+  },
+  completeBraces: {
+    label: "Complete braces. One pair per line",
+    type: "textarea",
+    default: "[]\n{}\n()"
+  }
+}, () => {
+  const options = GM_config.get();
+  options.completeBraces = createMap(options.completeBraces);
+  commandExcutor = textareaPlus.createCommandExcutor(options);
+  if (styleEl) styleEl.remove();
+  styleEl = GM_addStyle(`
+    textarea {
+      tab-size: ${options.indentSize};
+      -moz-tab-size: ${options.indentSize};
+      -o-tab-size: ${options.indentSize};
+    }`
+  );
+  
+  function createMap(text) {
+    const map = {__proto__: null};
+    for (const pair of text.split(/\s+/g)) {
+      if (pair.length == 2) {
+        map[pair[0]] = map[pair[1]];
+      } else if (pair.length != 0) {
+        alert(`Invalid pair: ${pair}`);
+      }
+    }
+  }
+});
+
 window.addEventListener("keydown", function(e){
 	if (!validArea(e.target) || e.ctrlKey || e.altKey) {
 		return;
@@ -302,33 +197,5 @@ window.addEventListener("keydown", function(e){
 		return;
 	}
 
-	function commands() {
-		return new Commands(new Editor(e.target));
-	}
-
-	var result = false;
-
-	if (e.keyCode == 9) {
-		// tab
-		if (e.shiftKey) {
-			result = commands().unindent();
-		} else {
-			result = commands().indent();
-		}
-	} else if (e.keyCode == 13) {
-		// enter
-		result = commands().newLineIndent();
-	} else if (e.keyCode == 36) {
-		// home
-		result = commands().smartHome(!e.shiftKey);
-	} else if (braceMatch[e.key]) {
-		// braces
-		result = commands().completeBraces(e.key);
-	}
-
-	if (result) {
-		e.preventDefault();
-	}
+  commandExcutor.run(e, () => new Editor(e.target));
 });
-
-GM_addStyle("textarea {tab-size: 4; -moz-tab-size: 4; -o-tab-size: 4;}");
