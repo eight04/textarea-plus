@@ -20,6 +20,9 @@ Demo
 
 Changelog
 ---------
+* 3.0.0 (Mar 16, 2018)
+  - Add test. Pull out the core part.
+  - Fix: keep extra spaces when indent/unindent. (#3)
 * 2.0.2 (Mar 16, 2017)
 	- Fix new line indent bug.
 * 2.0.1 (Jan 29, 2017)
