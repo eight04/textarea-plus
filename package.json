@@ -1,7 +1,7 @@
 {
   "name": "textarea-plus",
   "version": "2.0.2",
-  "description": "Have a better textarea! An userscript to improve plain textarea for code editing.",
+  "description": "Have a better textarea! A userscript which can improve plain textarea for code editing.",
   "keywords": [
     "userscript",
     "textarea"
@@ -13,14 +13,34 @@
   "main": "textarea-plus.user.js",
   "repository": "eight04/textarea-plus",
   "scripts": {
-    "test": "eslint *.js",
+    "test": "eslint **/*.js",
     "preversion": "npm test",
-    "version": "sync-version textarea-plus.user.js && git add .",
-    "postversion": "git push --follow-tags"
+    "version": "npm run build && git add .",
+    "postversion": "git push --follow-tags",
+    "build": "npm run build-lib && npm run build-userscript",
+    "build-lib": "rollup -c",
+    "build-userscript": "inlinejs src/textarea-plus.user.js -o dist/textarea-plus.user.js"
   },
   "private": true,
   "devDependencies": {
-    "eslint": "^3.14.1",
-    "sync-version": "^1.0.0"
+    "eslint": "^4.18.2",
+    "inline-js": "^0.6.0",
+    "rollup": "^0.57.0",
+    "rollup-plugin-commonjs": "^9.1.0",
+    "userscript-meta-cli": "^0.2.0"
+  },
+  "userscript": {
+    "namespace": "eight04.blogspot.com",
+    "include": "*",
+    "grant": [
+      "GM_getValue",
+      "GM_setValue",
+      "GM_registerMenuCommand",
+      "GM_addStyle"
+    ],
+    "compatible": [
+      "firefox Tampermonkey latest",
+      "chrome Tampermonkey latest"
+    ]
   }
 }

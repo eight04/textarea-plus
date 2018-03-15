@@ -1,19 +1,8 @@
-// ==UserScript==
-// @name        Textarea Plus
-// @description	An userscript to improve plain textarea for code editing.
-// @namespace   eight04.blogspot.com
-// @include     *
-// @version     2.0.2
-// @grant       GM_addStyle
-// @author		eight
-// @homepage	https://github.com/eight04/textarea-plus
-// @supportURL	https://github.com/eight04/textarea-plus/issues
-// @license		MIT
-// @compatible	firefox Tampermonkey latest
-// @compatible	chrome Tampermonkey latest
-// @require https://greasyfork.org/scripts/7212-gm-config-eight-s-version/code/GM_config%20(eight's%20version).js?version=156587
-// ==/UserScript==
+// $inline.line("cmd:userscript-meta")
 
+// $inline.line("../dist/textarea-plus.js")
+
+/* eslint-env browser, greasemonkey */
 /* global textareaPlus GM_config */
 
 class Editor {

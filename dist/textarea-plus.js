@@ -1,3 +1,6 @@
+var textareaPlus = (function () {
+'use strict';
+
 /* eslint-env node */
 
 function isSameLine(editor) {
@@ -120,7 +123,7 @@ const BRACES = {
   "[": "]",
   "{": "}",
   "(": ")",
-}
+};
 
 function runNewLine({editor, options}) {
   var content = editor.getContent(),
@@ -211,4 +214,8 @@ function createCommandExecutor(options = {}) {
 	return {run};
 }
 
-module.exports = {createCommandExecutor};
+var textareaPlus = {createCommandExecutor};
+
+return textareaPlus;
+
+}());
