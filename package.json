@@ -13,7 +13,7 @@
   "main": "textarea-plus.user.js",
   "repository": "eight04/textarea-plus",
   "scripts": {
-    "test": "eslint **/*.js",
+    "test": "eslint **/*.js && mocha",
     "preversion": "npm test",
     "version": "npm run build && git add .",
     "postversion": "git push --follow-tags",
@@ -23,8 +23,10 @@
   },
   "private": true,
   "devDependencies": {
+    "chai": "^4.1.2",
     "eslint": "^4.18.2",
     "inline-js": "^0.6.0",
+    "mocha": "^5.0.4",
     "rollup": "^0.57.0",
     "rollup-plugin-commonjs": "^9.1.0",
     "userscript-meta-cli": "^0.3.0"

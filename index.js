@@ -183,8 +183,8 @@ const COMMANDS = [
 ];
 
 const DEFAULT_OPTIONS = {
-  tabSize: 4,
-  tabStyle: "TAB",
+  indentSize: 4,
+  indentStyle: "TAB",
   completeBraces: {
     __proto__: null,
     "[": "]",
