@@ -130,8 +130,8 @@ describe("commandExecutor.run", () => {
             return value.slice(0, range.start) + "|" + value.slice(range.start);
           }
           return value.slice(0, range.start) +
-            "[" + value.slice(range.start, range.end) + "]"
-            + value.slice(range.end);
+            "[" + value.slice(range.start, range.end) + "]" +
+            value.slice(range.end);
         }
       }
     }
