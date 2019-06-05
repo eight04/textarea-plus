@@ -7,5 +7,5 @@ export default {
     format: "iife",
     name: "textareaPlus"
   },
-  plugins: [cjs()]
+  plugins: [cjs({cache: false})]
 };
