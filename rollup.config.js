@@ -1,11 +1,11 @@
-import commonjs from "rollup-plugin-commonjs";
+import cjs from "rollup-plugin-cjs-es";
 
 export default {
-  input: "bundle.js",
+  input: "index.js",
   output: {
     file: "dist/textarea-plus.js",
     format: "iife",
     name: "textareaPlus"
   },
-  plugins: [commonjs()]
+  plugins: [cjs()]
 };

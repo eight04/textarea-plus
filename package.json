@@ -24,11 +24,11 @@
   "private": true,
   "devDependencies": {
     "eslint": "^5.16.0",
-    "inline-js": "^0.6.0",
-    "mocha": "^5.0.4",
-    "rollup": "^0.57.0",
-    "rollup-plugin-commonjs": "^9.1.0",
-    "userscript-meta-cli": "^0.3.0"
+    "inline-js": "^0.8.0",
+    "mocha": "^6.1.4",
+    "rollup": "^1.14.0",
+    "rollup-plugin-cjs-es": "^0.8.0",
+    "userscript-meta-cli": "^0.4.2"
   },
   "userscript": {
     "name": "Textarea Plus",
