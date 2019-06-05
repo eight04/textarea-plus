@@ -1,6 +1,6 @@
 /* eslint-env node, mocha */
 
-const {assert} = require("chai");
+const assert = require("assert");
 const {createCommandExecutor} = require("..");
 
 describe("commandExecutor.run", () => {
