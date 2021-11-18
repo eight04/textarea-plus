@@ -1,7 +1,6 @@
-// $inline.line("cmd:userscript-meta")
-// $inline.line("../dist/textarea-plus.js")
 /* eslint-env browser, greasemonkey */
-/* global textareaPlus GM_config */
+/* global GM_config */
+import {createCommandExecutor} from "./index.mjs";
 
 class Editor {
 	constructor(textarea) {
@@ -154,7 +153,7 @@ GM_config.setup({
 }, () => {
   const options = GM_config.get();
   options.completeBraces = createMap(options.completeBraces);
-  commandExcutor = textareaPlus.createCommandExecutor(options);
+  commandExcutor = createCommandExecutor(options);
   if (styleEl) styleEl.remove();
   styleEl = GM_addStyle(`
     textarea {

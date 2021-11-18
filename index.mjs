@@ -1,5 +1,3 @@
-/* eslint-env node */
-
 function isSameLine(editor) {
   return !editor.getSelection().includes("\n");
 }
@@ -200,7 +198,7 @@ const DEFAULT_OPTIONS = {
   }
 };
 
-function createCommandExecutor(options = {}) {
+export function createCommandExecutor(options = {}) {
   options = Object.assign({}, DEFAULT_OPTIONS, options);
   
   function run(event, editorFactory) {
@@ -216,4 +214,3 @@ function createCommandExecutor(options = {}) {
 	return {run};
 }
 
-module.exports = {createCommandExecutor};
