@@ -1,0 +1,9 @@
+env:
+  es2021: true
+rules:
+  no-use-before-define: [2, 'nofunc']
+extends: eslint:recommended
+parserOptions:
+  # FIXME: https://github.com/eslint/eslint/issues/14588
+  sourceType: module
+

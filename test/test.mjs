@@ -1,7 +1,7 @@
 /* eslint-env node, mocha */
 
-const {assert} = require("chai");
-const {createCommandExecutor} = require("..");
+import {assert} from "chai";
+import {createCommandExecutor} from "../index.mjs";
 
 describe("commandExecutor.run", () => {
   function createTest(event) {
