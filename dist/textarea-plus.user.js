@@ -17,11 +17,6 @@
 // @require https://greasyfork.org/scripts/7212-gm-config-eight-s-version/code/GM_config%20(eight's%20version).js?version=156587
 // ==/UserScript==
 
-var textareaPlus = (function () {
-'use strict';
-
-/* eslint-env node */
-
 function isSameLine(editor) {
   return !editor.getSelection().includes("\n");
 }
@@ -238,14 +233,7 @@ function createCommandExecutor(options = {}) {
 	return {run};
 }
 
-var textareaPlus = {createCommandExecutor};
-
-return textareaPlus;
-
-}());
-
 /* eslint-env browser, greasemonkey */
-/* global textareaPlus GM_config */
 
 class Editor {
 	constructor(textarea) {
@@ -398,7 +386,7 @@ GM_config.setup({
 }, () => {
   const options = GM_config.get();
   options.completeBraces = createMap(options.completeBraces);
-  commandExcutor = textareaPlus.createCommandExecutor(options);
+  commandExcutor = createCommandExecutor(options);
   if (styleEl) styleEl.remove();
   styleEl = GM_addStyle(`
     textarea {
